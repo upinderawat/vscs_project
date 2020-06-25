@@ -1,1 +1,1 @@
-web: vscs .wsgi
+web: vscs.wsgi
