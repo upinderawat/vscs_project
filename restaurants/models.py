@@ -2,7 +2,7 @@ from django.db import models
 from datetime import datetime
 # Create your models here.
 class Restaurant(models.Model):
-    name= models.CharField(max_length=100)
+    name= models.CharField(max_length=100, unique=True)
     address= models.CharField(max_length=100)
     cuisine= models.CharField(max_length=100)
     expense= models.CharField(max_length=100)
