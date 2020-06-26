@@ -20,4 +20,5 @@ app_name='restaurants'
 
 urlpatterns = [
     path('', views.index, name='index'),
+    path('restaurant', views.get_merchant_data, name='restaurant')
 ]
