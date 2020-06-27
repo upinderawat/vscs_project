@@ -20,5 +20,6 @@ app_name='restaurants'
 
 urlpatterns = [
     path('', views.index, name='index'),
+    path('reserve', views.reserveTable.as_view(), name='reserveTable'),
     path('restaurant', views.get_merchant_data, name='restaurant')
 ]

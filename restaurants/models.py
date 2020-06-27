@@ -23,4 +23,4 @@ class Reservation(models.Model):
     time= models.DateTimeField(default=datetime.now)
 
     def __str__(self):
-        return self.email+" has reservation for "+self.numberOfPeople
+        return str(self.email)
