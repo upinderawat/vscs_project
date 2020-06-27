@@ -67,8 +67,7 @@ def get_merchant_data(request):
             "offers": random.choice(offers),
             "waitTime": random.randrange(1, 30)
         }
-        # print(SynthesizedResponse)
-        restaurant = Restaurant(id=id=responseJSON['merchantLocatorServiceResponse']['response'][0]['responseValues']['visaMerchantId'],
+        restaurant = Restaurant(id=responseJSON['merchantLocatorServiceResponse']['response'][0]['responseValues']['visaMerchantId'],
                                 name=responseJSON['merchantLocatorServiceResponse']['response'][0]['responseValues']['visaMerchantName'],
                                 address=responseJSON['merchantLocatorServiceResponse']['response'][0]['responseValues']['merchantStreetAddress'], 
                                 cuisine=random.choice(cuisines),
@@ -78,7 +77,6 @@ def get_merchant_data(request):
                                 )
         restaurant.save()
         finalResponse["restaurants"].append(SynthesizedResponse)
-        # restaurant = Restaurant(name=)
         i += 1
 
     formattedfinalResponse = json.dumps(finalResponse, indent=4, sort_keys=True)
