@@ -8,6 +8,9 @@ class Restaurant(models.Model):
     expense= models.CharField(max_length=100)
     offers= models.CharField(max_length=100)
     waitTime= models.IntegerField()
+    
+    class Meta:
+        get_latest_by = "waitTime"
 
     def __str__(self):
         return self.name
