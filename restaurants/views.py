@@ -58,21 +58,23 @@ def get_merchant_data(request):
 
         # print(responseJSON['merchantLocatorServiceResponse']['response'][0]['responseValues']['visaMerchantName'])
         SynthesizedResponse = {
+            "id": responseJSON['merchantLocatorServiceResponse']['response'][0]['responseValues']['visaMerchantId'],
             "name": responseJSON['merchantLocatorServiceResponse']['response'][0]['responseValues']['visaMerchantName'],
             "address": responseJSON['merchantLocatorServiceResponse']['response'][0]['responseValues'][
                 'merchantStreetAddress'],
             "cuisine": random.choice(cuisines),
             "expense": random.choice(expenses),
             "offers": random.choice(offers),
-            "waitTime": str(random.randrange(1, 30))
+            "waitTime": random.randrange(1, 30)
         }
         # print(SynthesizedResponse)
-        restaurant = Restaurant(name=responseJSON['merchantLocatorServiceResponse']['response'][0]['responseValues']['visaMerchantName'],
+        restaurant = Restaurant(id=id=responseJSON['merchantLocatorServiceResponse']['response'][0]['responseValues']['visaMerchantId'],
+                                name=responseJSON['merchantLocatorServiceResponse']['response'][0]['responseValues']['visaMerchantName'],
                                 address=responseJSON['merchantLocatorServiceResponse']['response'][0]['responseValues']['merchantStreetAddress'], 
                                 cuisine=random.choice(cuisines),
                                 expense=random.choice(expenses),
                                 offers=random.choice(offers),
-                                waitTime=str(random.randrange(1, 30))
+                                waitTime=random.randrange(1, 30)
                                 )
         restaurant.save()
         finalResponse["restaurants"].append(SynthesizedResponse)
