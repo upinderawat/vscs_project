@@ -106,7 +106,7 @@ def getMerchantData(request):
 
     #### Visa Merchant Locator API call ####
     i = 1
-    while i < 11:
+    while i < 2:
         payload = {
             "header": {
                 "messageDateTime": "2020-06-20T16:51:51.903",
