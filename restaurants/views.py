@@ -28,7 +28,7 @@ class reserveTable(APIView):
     def post(self, request, format=None):
         serializer = ReservationSerializer(data = request.data)
         if serializer.is_valid():
-            if not Reservation.objects.filter(email=serializer.validated_data['email']).exists():
+            if not Reservation.objects.filter(email=serializer.validated_data['email'], restaurant__iexact=serializer.validated_data['restaurant']).exists():
                 serializer.save()
                 return Response({
                     'result': 'true',
