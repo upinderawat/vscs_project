@@ -14,3 +14,12 @@ class User(models.Model):
     def __str__(self):
         return self.name
 
+class Invoice(models.Model):
+    """ This is a invoice in visa service """
+    itemName = models.CharField(max_length = 255)
+    quantity = models.IntegerField()
+    itemPrice = models.IntegerField()
+    cost = models.IntegerField()
+
+    def __str__(self):
+        return self.itemName
