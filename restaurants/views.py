@@ -12,7 +12,7 @@ import os
 from django.http import HttpResponse
 
 from .models import Restaurant, Reservation
-from .serializers import ReservationSerialzier
+from .serializers import ReservationSerialzier, QueryReservationSerialzier
 
 from rest_framework.views import APIView
 from rest_framework.response import Response
@@ -42,6 +42,32 @@ class reserveTable(APIView):
                 }, status=status.HTTP_200_OK)
         else:
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+class fetchPendingReservations(APIView):
+    serializer_class = QueryReservationSerialzier
+    def post(self, request, format=None):
+        serializer = QueryReservationSerialzier(data=request.data)
+        if serializer.is_valid():
+            reservations = Reservation.objects.filter(email=serializer.validated_data['email'])
+            if reservations.exists():
+                jsonList = []
+                for item in reservations:
+                    itemDict = {}
+                    itemDict['restaurant'] = item.restaurant
+                    itemDict['numberOfPeople'] = item.numberOfPeople
+                    itemDict['time'] = item.time
+                    jsonList.append(itemDict)
+                return Response({
+                    'result': 'true',
+                    'reservations': jsonList
+                }, status=status.HTTP_200_OK)
+            else:
+                return Response({
+                    'result': 'false',
+                    'reservations': []
+                },status=status.HTTP_204_NO_CONTENT)
+        else:
+            return Response(serializer.errors, status=status.HTTP_204_NO_CONTENT)
 
 def get_merchant_data(request):
     #### Synthesized data ####

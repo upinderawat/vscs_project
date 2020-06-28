@@ -4,3 +4,8 @@ class ReservationSerialzier(serializers.ModelSerializer):
     class Meta:
         model = Reservation
         fields= ['email','restaurant','numberOfPeople','time']
+
+class QueryReservationSerialzier(serializers.ModelSerializer):
+    class Meta:
+        model = Reservation
+        fields = ['email']
