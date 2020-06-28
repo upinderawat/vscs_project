@@ -83,3 +83,26 @@ class registerUser(APIView):
             return Response({'result': False,
                             'error': serializer.errors
                             })
+ 
+class fetchInvoice(APIView):
+    """ This function returns all the items"""
+    def get(self, request):
+        try:
+            invoiceList = models.Invoice.objects.all()
+            jsonList = []
+            for item in invoiceList:
+                itemDict = {}
+                itemDict['itemName'] = item.itemName
+                itemDict['quantity'] = item.quantity
+                itemDict['itemPrice'] = item.itemPrice
+                itemDict['cost'] = item.cost
+                jsonList.append(itemDict)
+            return Response({
+                'invoiceList':jsonList,
+                'result': True
+            })
+        except Exception as e:
+            return Response({
+                'result': False
+            })
+
