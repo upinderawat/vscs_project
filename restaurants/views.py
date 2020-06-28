@@ -1,3 +1,9 @@
+"""
+APIs called:
+    1) Visa Merchant Locator API
+    2) Visa Queue Insights API
+
+"""
 import requests
 import json
 import random
@@ -51,6 +57,8 @@ def get_merchant_data(request):
     url = "https://sandbox.api.visa.com/merchantlocator/v1/locator"
 
     finalResponse = {"restaurants": []}
+
+    #### Visa Merchant Locator API call ####
     i = 1
     while i < 3:
         payload = {
@@ -82,11 +90,9 @@ def get_merchant_data(request):
         cert = (cert_file_path, key_file_path)
         try:
             response = requests.request("POST", url, headers=headers, data=json.dumps(payload), cert=cert)
-
             responseText = response.text.encode('utf8')
             responseJSON = json.loads(responseText)
 
-            # print(responseJSON['merchantLocatorServiceResponse']['response'][0]['responseValues']['visaMerchantName'])
             SynthesizedResponse = {
                 "id": responseJSON['merchantLocatorServiceResponse']['response'][0]['responseValues']['visaMerchantId'],
                 "name": responseJSON['merchantLocatorServiceResponse']['response'][0]['responseValues']['visaMerchantName'],
@@ -119,3 +125,32 @@ def get_merchant_data(request):
     formattedfinalResponse = json.dumps(finalResponse, indent=4, sort_keys=True)
     return HttpResponse(formattedfinalResponse, 'application/json')
 
+def fetchWaitingTime(zipcode,cert_file_path,key_file_path):
+    """
+    Visa Queue Insights API call
+    Returns waiting time for merchants in an area
+    """
+    payload = {
+        "requestHeader": {
+            "messageDateTime": "2020-06-28T08:42:33.327",
+            "requestMessageId": "6da60e1b8b024532a2e0eacb1af58581"
+        },
+        "requestData": {
+            "kind": "predict"
+        }
+    }
+    headers = {
+            'Content-Type': 'application/json',
+            'Authorization': 'Basic UTlON1pTTVdZQzIxTFRXRjJHQVEyMUl6b0Fzb1lSNTBnOS1RZ2MwbTlieW81eXV2bzpCdjBqeThwM1ZyNDl5aUk0OTZCeXd6MXBNYzBUeFF3eUZ2M3lFUVc='
+    }
+    cert = (cert_file_path, key_file_path)
+    url = "https://sandbox.api.visa.com/visaqueueinsights/v1/queueinsights"
+
+    try:
+        response = requests.request("POST", url, headers=headers, data=json.dumps(payload), cert=cert)
+    except Exception as e:
+            return HttpResponse("Queue insights API request error: "+str(e))
+
+    responseJSON = json.loads(response.text.encode('utf8'))
+    formattedResponse = json.dumps(responseJSON, indent=4, sort_keys=True)
+    return HttpResponse(formattedResponse, 'application/json')
