@@ -38,8 +38,6 @@ class reserveTable(APIView):
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 def get_merchant_data(request):
-
-
     #### Synthesized data ####
     offers = ["10% off on total bill", "1+1 on drinks", "10% off on visa card payments", "20% off on buffet"]
     cuisines = ["CHINESE", "CONTINENTAL", "ITALIAN", "INDIAN"]
@@ -82,32 +80,40 @@ def get_merchant_data(request):
         }
 
         cert = (cert_file_path, key_file_path)
-        response = requests.request("POST", url, headers=headers, data=json.dumps(payload), cert=cert)
+        try:
+            response = requests.request("POST", url, headers=headers, data=json.dumps(payload), cert=cert)
 
-        responseText = response.text.encode('utf8')
-        responseJSON = json.loads(responseText)
+            responseText = response.text.encode('utf8')
+            responseJSON = json.loads(responseText)
 
-        # print(responseJSON['merchantLocatorServiceResponse']['response'][0]['responseValues']['visaMerchantName'])
-        SynthesizedResponse = {
-            "id": responseJSON['merchantLocatorServiceResponse']['response'][0]['responseValues']['visaMerchantId'],
-            "name": responseJSON['merchantLocatorServiceResponse']['response'][0]['responseValues']['visaMerchantName'],
-            "address": responseJSON['merchantLocatorServiceResponse']['response'][0]['responseValues'][
-                'merchantStreetAddress'],
-            "cuisine": random.choice(cuisines),
-            "expense": random.choice(expenses),
-            "offers": random.choice(offers),
-            "waitTime": random.randrange(1, 30)
-        }
-        restaurant = Restaurant(id=responseJSON['merchantLocatorServiceResponse']['response'][0]['responseValues']['visaMerchantId'],
-                                name=responseJSON['merchantLocatorServiceResponse']['response'][0]['responseValues']['visaMerchantName'],
-                                address=responseJSON['merchantLocatorServiceResponse']['response'][0]['responseValues']['merchantStreetAddress'], 
-                                cuisine=random.choice(cuisines),
-                                expense=random.choice(expenses),
-                                offers=random.choice(offers),
-                                waitTime=random.randrange(1, 30)
-                                )
-        restaurant.save()
-        finalResponse["restaurants"].append(SynthesizedResponse)
+            # print(responseJSON['merchantLocatorServiceResponse']['response'][0]['responseValues']['visaMerchantName'])
+            SynthesizedResponse = {
+                "id": responseJSON['merchantLocatorServiceResponse']['response'][0]['responseValues']['visaMerchantId'],
+                "name": responseJSON['merchantLocatorServiceResponse']['response'][0]['responseValues']['visaMerchantName'],
+                "address": responseJSON['merchantLocatorServiceResponse']['response'][0]['responseValues'][
+                    'merchantStreetAddress'],
+                "cuisine": random.choice(cuisines),
+                "expense": random.choice(expenses),
+                "offers": random.choice(offers),
+                "waitTime": random.randrange(1, 30)
+            }
+            try:
+                restaurant = Restaurant(id=responseJSON['merchantLocatorServiceResponse']['response'][0]['responseValues']['visaMerchantId'],
+                                        name=responseJSON['merchantLocatorServiceResponse']['response'][0]['responseValues']['visaMerchantName'],
+                                        address=responseJSON['merchantLocatorServiceResponse']['response'][0]['responseValues']['merchantStreetAddress'], 
+                                        cuisine=random.choice(cuisines),
+                                        expense=random.choice(expenses),
+                                        offers=random.choice(offers),
+                                        waitTime=random.randrange(1, 30)
+                                        )
+                restaurant.save()
+            except Exception as e:
+                return HttpResponse("Error inserting into restaurant table: "+str(e))
+
+            finalResponse["restaurants"].append(SynthesizedResponse)
+            
+        except Exception as e:
+            return HttpResponse("API request error: "+str(e))
         i += 1
 
     formattedfinalResponse = json.dumps(finalResponse, indent=4, sort_keys=True)
