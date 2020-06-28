@@ -88,7 +88,8 @@ class payReservation(APIView):
                 }, status.HTTP_204_NO_CONTENT)
         else:
             return Response(serializer.errors)
-def get_merchant_data(request):
+
+def getMerchantData(request):
     #### Synthesized data ####
     offers = ["10% off on total bill", "1+1 on drinks", "10% off on visa card payments", "20% off on buffet"]
     cuisines = ["CHINESE", "CONTINENTAL", "ITALIAN", "INDIAN"]
@@ -105,7 +106,7 @@ def get_merchant_data(request):
 
     #### Visa Merchant Locator API call ####
     i = 1
-    while i < 3:
+    while i < 2:
         payload = {
             "header": {
                 "messageDateTime": "2020-06-20T16:51:51.903",
@@ -138,16 +139,6 @@ def get_merchant_data(request):
             responseText = response.text.encode('utf8')
             responseJSON = json.loads(responseText)
 
-            SynthesizedResponse = {
-                "id": responseJSON['merchantLocatorServiceResponse']['response'][0]['responseValues']['visaMerchantId'],
-                "name": responseJSON['merchantLocatorServiceResponse']['response'][0]['responseValues']['visaMerchantName'],
-                "address": responseJSON['merchantLocatorServiceResponse']['response'][0]['responseValues'][
-                    'merchantStreetAddress'],
-                "cuisine": random.choice(cuisines),
-                "expense": random.choice(expenses),
-                "offers": random.choice(offers),
-                "waitTime": random.randrange(1, 30)
-            }
             try:
                 restaurant = Restaurant(id=responseJSON['merchantLocatorServiceResponse']['response'][0]['responseValues']['visaMerchantId'],
                                         name=responseJSON['merchantLocatorServiceResponse']['response'][0]['responseValues']['visaMerchantName'],
@@ -160,15 +151,38 @@ def get_merchant_data(request):
                 restaurant.save()
             except Exception as e:
                 return HttpResponse("Error inserting into restaurant table: "+str(e))
-
-            finalResponse["restaurants"].append(SynthesizedResponse)
             
         except Exception as e:
             return HttpResponse("API request error: "+str(e))
         i += 1
 
-    formattedfinalResponse = json.dumps(finalResponse, indent=4, sort_keys=True)
-    return HttpResponse(formattedfinalResponse, 'application/json')
+    return staticMerchantData()
+
+def staticMerchantData():
+    """
+    Fetch static data from restaurant table in database
+    """
+    try:
+        restaurantList = Restaurant.objects.all()
+        response = {"restaurants": []}
+
+        for restr in restaurantList:
+            res={ 
+                "id" : restr.id,
+                "name" :  restr.name,
+                "address" : restr.address,
+                "cuisine" : restr.cuisine,
+                "expense" : restr.expense,
+                "offers" : restr.offers,
+                "waitTime" : restr.waitTime
+            }
+            response["restaurants"].append(res)
+
+        formattedResponse = json.dumps(response, indent=4, sort_keys=True)
+        return HttpResponse(formattedResponse, 'application/json')
+
+    except Exception as e:
+        return HttpResponse("Fetch error from restaurant table: "+str(e))
 
 def fetchWaitingTime(zipcode,cert_file_path,key_file_path):
     """
@@ -198,4 +212,5 @@ def fetchWaitingTime(zipcode,cert_file_path,key_file_path):
 
     responseJSON = json.loads(response.text.encode('utf8'))
     formattedResponse = json.dumps(responseJSON, indent=4, sort_keys=True)
+
     return HttpResponse(formattedResponse, 'application/json')
