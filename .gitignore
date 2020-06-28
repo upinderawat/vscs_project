@@ -24,7 +24,7 @@ media
 *.so
 
 # Distribution / packaging
-/migrations/
+
 .Python
 build/
 develop-eggs/
@@ -243,8 +243,3 @@ fabric.properties
 # End of https://www.toptal.com/developers/gitignore/api/django,pycharm
 .idea/
 
-db.sqlite3
-
-restaurants/migrations/
-
-users/migrations/
