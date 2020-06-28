@@ -12,7 +12,7 @@ import os
 from django.http import HttpResponse
 
 from .models import Restaurant, Reservation
-from .serializers import ReservationSerialzier, QueryReservationSerialzier
+from .serializers import ReservationSerializer, QueryReservationSerializer, PayReservationSerializer
 
 from rest_framework.views import APIView
 from rest_framework.response import Response
@@ -23,10 +23,10 @@ def index(request):
     return HttpResponse("<h1>Server is working</h1>")
 
 class reserveTable(APIView):
-    serializer_class = ReservationSerialzier
+    serializer_class = ReservationSerializer
 
     def post(self, request, format=None):
-        serializer = ReservationSerialzier(data = request.data)
+        serializer = ReservationSerializer(data = request.data)
         if serializer.is_valid():
             if not Reservation.objects.filter(email=serializer.validated_data['email']).exists():
                 serializer.save()
@@ -44,9 +44,9 @@ class reserveTable(APIView):
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 class fetchPendingReservations(APIView):
-    serializer_class = QueryReservationSerialzier
+    serializer_class = QueryReservationSerializer
     def post(self, request, format=None):
-        serializer = QueryReservationSerialzier(data=request.data)
+        serializer = QueryReservationSerializer(data=request.data)
         if serializer.is_valid():
             reservations = Reservation.objects.filter(email=serializer.validated_data['email'])
             if reservations.exists():
@@ -69,6 +69,25 @@ class fetchPendingReservations(APIView):
         else:
             return Response(serializer.errors, status=status.HTTP_204_NO_CONTENT)
 
+class payReservation(APIView):
+    serializer_class = PayReservationSerializer
+    def post(self, request, format=None):
+        serializer = PayReservationSerializer(data = request.data)
+        if serializer.is_valid():
+            reservation = Reservation.objects.filter(email=serializer.validated_data['email'], restaurant__iexact=serializer.validated_data['restaurant'])
+            if reservation:
+                reservation.delete()
+                return Response({
+                    'result':'true',
+                    'message': "reservation has been successfully deleted for {}".format(serializer.validated_data['email'])
+                }, status= status.HTTP_200_OK)
+            else:
+                return Response({
+                    'result':'false',
+                    'message':'Entry does not exist'
+                }, status.HTTP_204_NO_CONTENT)
+        else:
+            return Response(serializer.errors)
 def get_merchant_data(request):
     #### Synthesized data ####
     offers = ["10% off on total bill", "1+1 on drinks", "10% off on visa card payments", "20% off on buffet"]
