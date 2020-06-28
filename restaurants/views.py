@@ -106,7 +106,7 @@ def getMerchantData(request):
 
     #### Visa Merchant Locator API call ####
     i = 1
-    while i < 2:
+    while i < 11:
         payload = {
             "header": {
                 "messageDateTime": "2020-06-20T16:51:51.903",
@@ -164,9 +164,10 @@ def staticMerchantData():
     """
     try:
         restaurantList = Restaurant.objects.all()
+        sortedRestaurantList = restaurantList.order_by('waitTime')
         response = {"restaurants": []}
 
-        for restr in restaurantList:
+        for restr in sortedRestaurantList:
             res={ 
                 "id" : restr.id,
                 "name" :  restr.name,
