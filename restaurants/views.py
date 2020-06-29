@@ -2,7 +2,6 @@
 APIs called:
     1) Visa Merchant Locator API
     2) Visa Queue Insights API
-
 """
 import requests
 import json
@@ -89,101 +88,103 @@ class payReservation(APIView):
         else:
             return Response(serializer.errors)
 
-def getMerchantData(request):
-    #### Synthesized data ####
-    offers = ["10% off on total bill", "1+1 on drinks", "10% off on visa card payments", "20% off on buffet"]
-    cuisines = ["CHINESE", "CONTINENTAL", "ITALIAN", "INDIAN"]
-    expenses = ["LOW", "AVERAGE", "HIGH"]
+class getMerchantData(APIView):
+    def get(self, request, format=None):
 
-    #### Input ####
-    zipcode = "94404"
-    BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-    cert_file_path = os.path.join(BASE_DIR, "restaurants/cert.pem")
-    key_file_path = os.path.join(BASE_DIR,"restaurants/key.pem")
-    url = "https://sandbox.api.visa.com/merchantlocator/v1/locator"
+        #### Synthesized data ####
+        offers = ["5% off on total bill", "10% off on total bill", "20% off on total bill", "30% off on total bill",]
+        cuisines = ["CHINESE", "CONTINENTAL", "ITALIAN", "INDIAN"]
+        expenses = ["1","2","3"]
 
-    finalResponse = {"restaurants": []}
+        #### Input ####
+        zipcode = "94404"
+        BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+        cert_file_path = os.path.join(BASE_DIR, "restaurants/cert.pem")
+        key_file_path = os.path.join(BASE_DIR,"restaurants/key.pem")
+        url = "https://sandbox.api.visa.com/merchantlocator/v1/locator"
 
-    #### Visa Merchant Locator API call ####
-    i = 1
-    while i < 2:
-        payload = {
-            "header": {
-                "messageDateTime": "2020-06-20T16:51:51.903",
-                "requestMessageId": "Request_001",
-                "startIndex": str(i)
-            },
-            "searchAttrList": {
-                "merchantCategoryCode": ["5812"],
-                "merchantCountryCode": "840",
-                "merchantPostalCode": zipcode,
-                "distance": "20",
-                "distanceUnit": "M"
-            },
-            "responseAttrList": ["GNLOCATOR"],
-            "searchOptions": {
-                "maxRecords": "10",
-                "matchIndicators": "true",
-                "matchScore": "true"
+        finalResponse = {"restaurants": []}
+
+        #### Visa Merchant Locator API call ####
+        startIdx = 1
+        while startIdx < 11:
+            payload = {
+                "header": {
+                    "messageDateTime": "2020-06-20T16:51:51.903",
+                    "requestMessageId": "Request_001",
+                    "startIndex": str(startIdx)
+                },
+                "searchAttrList": {
+                    "merchantCategoryCode": ["5812"],
+                    "merchantCountryCode": "840",
+                    "merchantPostalCode": zipcode,
+                    "distance": "20",
+                    "distanceUnit": "M"
+                },
+                "responseAttrList": ["GNLOCATOR"],
+                "searchOptions": {
+                    "maxRecords": "10",
+                    "matchIndicators": "true",
+                    "matchScore": "true"
+                }
             }
-        }
 
-        headers = {
-            'Content-Type': 'application/json',
-            'Authorization': 'Basic UTlON1pTTVdZQzIxTFRXRjJHQVEyMUl6b0Fzb1lSNTBnOS1RZ2MwbTlieW81eXV2bzpCdjBqeThwM1ZyNDl5aUk0OTZCeXd6MXBNYzBUeFF3eUZ2M3lFUVc='
-        }
+            headers = {
+                'Content-Type': 'application/json',
+                'Authorization': 'Basic UTlON1pTTVdZQzIxTFRXRjJHQVEyMUl6b0Fzb1lSNTBnOS1RZ2MwbTlieW81eXV2bzpCdjBqeThwM1ZyNDl5aUk0OTZCeXd6MXBNYzBUeFF3eUZ2M3lFUVc='
+            }
 
-        cert = (cert_file_path, key_file_path)
-        try:
-            response = requests.request("POST", url, headers=headers, data=json.dumps(payload), cert=cert)
-            responseText = response.text.encode('utf8')
-            responseJSON = json.loads(responseText)
-
+            cert = (cert_file_path, key_file_path)
             try:
-                restaurant = Restaurant(id=responseJSON['merchantLocatorServiceResponse']['response'][0]['responseValues']['visaMerchantId'],
-                                        name=responseJSON['merchantLocatorServiceResponse']['response'][0]['responseValues']['visaMerchantName'],
-                                        address=responseJSON['merchantLocatorServiceResponse']['response'][0]['responseValues']['merchantStreetAddress'], 
-                                        cuisine=random.choice(cuisines),
-                                        expense=random.choice(expenses),
-                                        offers=random.choice(offers),
-                                        waitTime=random.randrange(1, 30)
-                                        )
-                restaurant.save()
+                response = requests.request("POST", url, headers=headers, data=json.dumps(payload), cert=cert)
+                responseText = response.text.encode('utf8')
+                responseJSON = json.loads(responseText)
+
+                try:
+                    restaurant = Restaurant(id=responseJSON['merchantLocatorServiceResponse']['response'][0]['responseValues']['visaMerchantId'],
+                                            name=responseJSON['merchantLocatorServiceResponse']['response'][0]['responseValues']['visaMerchantName'],
+                                            address=responseJSON['merchantLocatorServiceResponse']['response'][0]['responseValues']['merchantStreetAddress'], 
+                                            cuisine=random.choice(cuisines),
+                                            expense=random.choice(expenses),
+                                            offers=random.choice(offers),
+                                            waitTime=random.randrange(1, 30)
+                                            )
+                    restaurant.save()
+                except Exception as e:
+                    return HttpResponse("Error inserting into restaurant table: "+str(e))
+                
             except Exception as e:
-                return HttpResponse("Error inserting into restaurant table: "+str(e))
-            
+                return HttpResponse("API request error: "+str(e))
+            startIdx += 1
+
+        return self.staticMerchantData()
+
+    def staticMerchantData(self):
+        """
+        Fetch static data from restaurant table in database
+        """
+        try:
+            restaurantList = Restaurant.objects.all()
+            sortedRestaurantList = restaurantList.order_by('waitTime')
+            response = {"restaurants": []}
+
+            for restr in sortedRestaurantList:
+                res={ 
+                    "id" : restr.id,
+                    "name" :  restr.name,
+                    "address" : restr.address,
+                    "cuisine" : restr.cuisine,
+                    "expense" : restr.expense,
+                    "offers" : restr.offers,
+                    "waitTime" : restr.waitTime
+                }
+                response["restaurants"].append(res)
+
+            formattedResponse = json.dumps(response, indent=4, sort_keys=True)
+            return HttpResponse(formattedResponse, 'application/json')
+
         except Exception as e:
-            return HttpResponse("API request error: "+str(e))
-        i += 1
-
-    return staticMerchantData()
-
-def staticMerchantData():
-    """
-    Fetch static data from restaurant table in database
-    """
-    try:
-        restaurantList = Restaurant.objects.all()
-        sortedRestaurantList = restaurantList.order_by('waitTime')
-        response = {"restaurants": []}
-
-        for restr in sortedRestaurantList:
-            res={ 
-                "id" : restr.id,
-                "name" :  restr.name,
-                "address" : restr.address,
-                "cuisine" : restr.cuisine,
-                "expense" : restr.expense,
-                "offers" : restr.offers,
-                "waitTime" : restr.waitTime
-            }
-            response["restaurants"].append(res)
-
-        formattedResponse = json.dumps(response, indent=4, sort_keys=True)
-        return HttpResponse(formattedResponse, 'application/json')
-
-    except Exception as e:
-        return HttpResponse("Fetch error from restaurant table: "+str(e))
+            return HttpResponse("Fetch error from restaurant table: "+str(e))
 
 def fetchWaitingTime(zipcode,cert_file_path,key_file_path):
     """
