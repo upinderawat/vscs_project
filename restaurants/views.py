@@ -107,7 +107,7 @@ class getMerchantData(APIView):
 
         #### Visa Merchant Locator API call ####
         startIdx = 1
-        while startIdx < 11:
+        while startIdx < 2:
             payload = {
                 "header": {
                     "messageDateTime": "2020-06-20T16:51:51.903",
