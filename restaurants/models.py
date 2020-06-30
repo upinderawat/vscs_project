@@ -18,7 +18,7 @@ class Restaurant(models.Model):
 
 class Reservation(models.Model):
     email = models.EmailField()
-    restaurant = models.CharField(max_length=20)
+    restaurant = models.CharField(max_length=100)
     numberOfPeople= models.IntegerField()
     time= models.DateTimeField(default=datetime.now)
 
