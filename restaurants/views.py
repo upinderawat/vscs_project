@@ -2,6 +2,7 @@
 APIs called:
     1) Visa Merchant Locator API
     2) Visa Queue Insights API
+    3) Visa Merchant Offers Resource Center(VMORC)
 """
 import requests
 import json
@@ -186,33 +187,53 @@ class getMerchantData(APIView):
         except Exception as e:
             return HttpResponse("Fetch error from restaurant table: "+str(e))
 
-def fetchWaitingTime(zipcode,cert_file_path,key_file_path):
-    """
-    Visa Queue Insights API call
-    Returns waiting time for merchants in an area
-    """
-    payload = {
-        "requestHeader": {
-            "messageDateTime": "2020-06-28T08:42:33.327",
-            "requestMessageId": "6da60e1b8b024532a2e0eacb1af58581"
-        },
-        "requestData": {
-            "kind": "predict"
+    def fetchWaitingTime(self,zipcode,cert_file_path,key_file_path):
+        """
+        Visa Queue Insights API call
+        Returns waiting time for merchants in an area
+        """
+        payload = {
+            "requestHeader": {
+                "messageDateTime": "2020-06-28T08:42:33.327",
+                "requestMessageId": "6da60e1b8b024532a2e0eacb1af58581"
+            },
+            "requestData": {
+                "kind": "predict"
+            }
         }
-    }
-    headers = {
-            'Content-Type': 'application/json',
-            'Authorization': 'Basic UTlON1pTTVdZQzIxTFRXRjJHQVEyMUl6b0Fzb1lSNTBnOS1RZ2MwbTlieW81eXV2bzpCdjBqeThwM1ZyNDl5aUk0OTZCeXd6MXBNYzBUeFF3eUZ2M3lFUVc='
-    }
-    cert = (cert_file_path, key_file_path)
-    url = "https://sandbox.api.visa.com/visaqueueinsights/v1/queueinsights"
+        headers = {
+                'Content-Type': 'application/json',
+                'Authorization': 'Basic UTlON1pTTVdZQzIxTFRXRjJHQVEyMUl6b0Fzb1lSNTBnOS1RZ2MwbTlieW81eXV2bzpCdjBqeThwM1ZyNDl5aUk0OTZCeXd6MXBNYzBUeFF3eUZ2M3lFUVc='
+        }
+        cert = (cert_file_path, key_file_path)
+        url = "https://sandbox.api.visa.com/visaqueueinsights/v1/queueinsights"
 
-    try:
-        response = requests.request("POST", url, headers=headers, data=json.dumps(payload), cert=cert)
-    except Exception as e:
-            return HttpResponse("Queue insights API request error: "+str(e))
+        try:
+            response = requests.request("POST", url, headers=headers, data=json.dumps(payload), cert=cert)
+        except Exception as e:
+                return HttpResponse("Queue insights API request error: "+str(e))
 
-    responseJSON = json.loads(response.text.encode('utf8'))
-    formattedResponse = json.dumps(responseJSON, indent=4, sort_keys=True)
+        responseJSON = json.loads(response.text.encode('utf8'))
+        formattedResponse = json.dumps(responseJSON, indent=4, sort_keys=True)
 
-    return HttpResponse(formattedResponse, 'application/json')
+        return HttpResponse(formattedResponse, 'application/json')
+
+    def getOffers(self,cert_file_path,key_file_path):
+        """
+        Visa Merchant Offers Resource Center(VMORC) API call
+        Returns offers from merchants that can be availed by users
+        """
+        url = "https://sandbox.api.visa.com/vmorc/offers/v1/byofferid"
+        payload = {}
+        headers = {
+          'Content-Type': 'application/json',
+          'Authorization': 'Basic UTlON1pTTVdZQzIxTFRXRjJHQVEyMUl6b0Fzb1lSNTBnOS1RZ2MwbTlieW81eXV2bzpCdjBqeThwM1ZyNDl5aUk0OTZCeXd6MXBNYzBUeFF3eUZ2M3lFUVc=',
+          'Cookie': 'serv_id=8e67f1fac322438464eff932e59f6b94'
+        }
+        cert = (cert_file_path, key_file_path)
+
+        response = requests.request("GET", url, headers=headers, data=json.dumps(payload), cert=cert)
+        responseJSON = json.loads(response.text.encode('utf8'))
+        formattedResponse = json.dumps(responseJSON, indent=4, sort_keys=True)
+
+        return HttpResponse(formattedResponse, 'application/json')
