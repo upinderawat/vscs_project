@@ -3,6 +3,7 @@ APIs called:
     1) Visa Merchant Locator API
     2) Visa Queue Insights API
     3) Visa Merchant Offers Resource Center(VMORC)
+    4) Visa Direct(mVisa MerchantPushPayments) API call
 """
 import requests
 import json
@@ -10,7 +11,7 @@ import random
 import os
 
 from django.http import HttpResponse
-
+import xml.etree.ElementTree as ET
 from .models import Restaurant, Reservation
 from .serializers import ReservationSerializer, QueryReservationSerializer, PayReservationSerializer
 
@@ -105,7 +106,6 @@ class getMerchantData(APIView):
         url = "https://sandbox.api.visa.com/merchantlocator/v1/locator"
 
         finalResponse = {"restaurants": []}
-
         #### Visa Merchant Locator API call ####
         startIdx = 1
         while startIdx < 2:
@@ -237,3 +237,65 @@ class getMerchantData(APIView):
         formattedResponse = json.dumps(responseJSON, indent=4, sort_keys=True)
 
         return HttpResponse(formattedResponse, 'application/json')
+
+class pushPayment(APIView):
+    def get(self, request, format=None):
+        """
+        Visa Direct(mVisa MerchantPushPayments) API call
+        Allows customer to pay using QR, NFC or merchant's PAN
+        """
+        ##### INPUT ####
+        merchantPAN = "4123640062698797"
+        amount = "124.05"
+        #################
+        
+        url = "https://sandbox.api.visa.com/visadirect/mvisa/v1/merchantpushpayments"
+        BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+        cert_file_path = os.path.join(BASE_DIR, "restaurants/cert.pem")
+        key_file_path = os.path.join(BASE_DIR,"restaurants/key.pem")
+        payload =  {
+            "acquirerCountryCode": "356",
+            "acquiringBin": "408972",
+            "amount": amount,
+            "businessApplicationId": "MP",
+            "cardAcceptor": {
+                "address": {
+                "city": "KOLKATA",
+                "country": "IN"
+                },
+                "idCode": "CA-IDCode-77765",
+                "name": "Visa Inc. USA-Foster City"
+            },
+            "localTransactionDateTime": "2020-06-30T20:32:22",
+            "purchaseIdentifier": {
+                "type": "0",
+                "referenceNumber": "REF_123456789123456789123"
+            },
+            "recipientPrimaryAccountNumber": merchantPAN,
+            "retrievalReferenceNumber": "412770451035",
+            "secondaryId": "123TEST",
+            "senderAccountNumber": "4027290077881587",
+            "senderName": "Jasper",
+            "senderReference": "",
+            "systemsTraceAuditNumber": "451035",
+            "transactionCurrencyCode": "356",
+            "merchantCategoryCode": "5812",
+            "settlementServiceIndicator": "9"
+        }
+
+        headers = {
+            'Content-Type': 'application/json',
+            'Authorization': 'Basic UTlON1pTTVdZQzIxTFRXRjJHQVEyMUl6b0Fzb1lSNTBnOS1RZ2MwbTlieW81eXV2bzpCdjBqeThwM1ZyNDl5aUk0OTZCeXd6MXBNYzBUeFF3eUZ2M3lFUVc=',
+            'Cookie': 'serv_id=8e67f1fac322438464eff932e59f6b94'
+        }
+        cert = (cert_file_path, key_file_path)
+
+        response = requests.request("POST", url, headers=headers, data=json.dumps(payload), cert=cert)
+        formattedResponse=response.content.decode('utf-8')
+        root = ET.fromstring(formattedResponse)
+        jsonDict={}
+        for i in root: 
+            jsonDict[i.tag]=i.text
+        formattedJsonDict = json.dumps(jsonDict, indent=4, sort_keys=True)
+
+        return HttpResponse(formattedJsonDict, 'application/json')

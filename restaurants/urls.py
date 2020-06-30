@@ -23,5 +23,6 @@ urlpatterns = [
     path('reserve', views.reserveTable.as_view(), name='reserveTable'),
     path('fetchPendingReservations', views.fetchPendingReservations.as_view(), name='fetchPendingReservations'),
     path('pay', views.payReservation.as_view(), name = 'payReservation'),
-    path('fetchRestaurantList', views.getMerchantData.as_view(), name='restaurant')
+    path('fetchRestaurantList', views.getMerchantData.as_view(), name='restaurant'),
+    path('pushPayment', views.pushPayment.as_view(), name='pushPayment')
 ]
