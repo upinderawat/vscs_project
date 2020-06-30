@@ -16,5 +16,6 @@ python manage.py createsuperuser
 #### Migrate DB and runserver
 ```
 python manage.py makemigrations
+python manage.py migrate
 python manage.py runserver
 ```
