@@ -24,6 +24,20 @@ def index(request):
     return HttpResponse("<h1>Server is working</h1>")
 
 class reserveTable(APIView):
+    """
+    reserves the booking for provided email and restaurant name.
+    args:
+        POST request
+        {
+            'email', 'restaurant', 'numberOfPeople', 'time'
+        }
+    returns:
+        Json Object
+        {
+            'result': 'true' when booking has been successfully made, 'false' for duplicate booking
+            'message': response message
+        }
+    """
     serializer_class = ReservationSerializer
 
     def post(self, request, format=None):
@@ -45,6 +59,28 @@ class reserveTable(APIView):
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 class fetchPendingReservations(APIView):
+    """
+    returns the details of pending booking made for user
+    args:
+        POST request
+        {
+            'email'
+        }
+    returns:
+        Json Object
+        {
+            'result': 'true' for successful fetch, 'false' if no booking exists for user
+            'reservations': list of restaurants booked by user
+            [
+                {
+                    'restaurant': name of restaurant,
+                    'numberOfPeople': number of people reserved for,
+                    'time': time of booking,
+                    'offers': available offers, otherwise None
+                }
+            ]
+        }
+    """
     serializer_class = QueryReservationSerializer
     def post(self, request, format=None):
         serializer = QueryReservationSerializer(data=request.data)
@@ -78,6 +114,20 @@ class fetchPendingReservations(APIView):
             return Response(serializer.errors, status=status.HTTP_204_NO_CONTENT)
 
 class payReservation(APIView):
+    """
+    removes the booking for user
+    args:
+        POST request
+        {
+            'email', 'restaurant'
+        }
+    returns:
+        Json Object
+        {
+            'result': 'true' when booking has been successfully removed, 'false' when booking doesn't exist
+            'message': response message
+        }
+    """
     serializer_class = PayReservationSerializer
     def post(self, request, format=None):
         serializer = PayReservationSerializer(data = request.data)
