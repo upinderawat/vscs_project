@@ -98,6 +98,20 @@ class payReservation(APIView):
             return Response(serializer.errors)
 
 class getMerchantData(APIView):
+    """
+    Fetches merchant data based on zipcode or longitude/latitude
+
+    Request :
+        GET(zipcode is hardcoded right now)
+
+    Response:
+        JSON object containing {'id','name','address','cuisine','expense','offer','waitTime'}
+
+    Exception Handling:
+        Following exceptions are handled:
+        1) If request to MerchantLocator API fails
+        2) If insertion in restaurant table fails
+    """
     def get(self, request, format=None):
 
         #### Synthesized data ####
@@ -113,6 +127,7 @@ class getMerchantData(APIView):
         url = "https://sandbox.api.visa.com/merchantlocator/v1/locator"
 
         finalResponse = {"restaurants": []}
+
         #### Visa Merchant Locator API call ####
         startIdx = 1
         while startIdx < 2:
@@ -169,7 +184,8 @@ class getMerchantData(APIView):
 
     def staticMerchantData(self):
         """
-        Fetch static data from restaurant table in database
+        Fetches static data from restaurant table in database
+        This is done to reduce long time taken by dynamic API calls
         """
         try:
             restaurantList = Restaurant.objects.all()
@@ -198,6 +214,16 @@ class getMerchantData(APIView):
         """
         Visa Queue Insights API call
         Returns waiting time for merchants in an area
+
+        Request:
+            kind : predict/feedback
+            requestMessageId : unique id for service request
+
+        Respone:
+            merchantList containing ['name','waitTime','zipcode']
+
+        Raises Exception:
+            If API request fails
         """
         payload = {
             "requestHeader": {
@@ -216,6 +242,7 @@ class getMerchantData(APIView):
         url = "https://sandbox.api.visa.com/visaqueueinsights/v1/queueinsights"
 
         try:
+            # Visa Queue Insights API called here
             response = requests.request("POST", url, headers=headers, data=json.dumps(payload), cert=cert)
         except Exception as e:
                 return HttpResponse("Queue insights API request error: "+str(e))
@@ -229,6 +256,12 @@ class getMerchantData(APIView):
         """
         Visa Merchant Offers Resource Center(VMORC) API call
         Returns offers from merchants that can be availed by users
+
+        Request:
+            Only GET request available in sandbox environment
+
+        Response:
+            offers array containing ['offerID','offerStatus','language','validity']
         """
         url = "https://sandbox.api.visa.com/vmorc/offers/v1/byofferid"
         payload = {}
@@ -239,6 +272,7 @@ class getMerchantData(APIView):
         }
         cert = (cert_file_path, key_file_path)
 
+        # VMORC API called here 
         response = requests.request("GET", url, headers=headers, data=json.dumps(payload), cert=cert)
         responseJSON = json.loads(response.text.encode('utf8'))
         formattedResponse = json.dumps(responseJSON, indent=4, sort_keys=True)
@@ -250,6 +284,13 @@ class pushPayment(APIView):
         """
         Visa Direct(mVisa MerchantPushPayments) API call
         Allows customer to pay using QR, NFC or merchant's PAN
+
+        Request:
+            recipientPrimaryAccountNumber: Merchants's uniqu PAN
+            amount: Transaction amount
+
+        Response:
+            JSON object containing {'transactionIdentifier','transmissionDateTime','approvalCode'}
         """
         ##### INPUT ####
         merchantPAN = "4123640062698797"
@@ -297,8 +338,10 @@ class pushPayment(APIView):
         }
         cert = (cert_file_path, key_file_path)
 
+        # Visa direct API called here 
         response = requests.request("POST", url, headers=headers, data=json.dumps(payload), cert=cert)
         formattedResponse=response.content.decode('utf-8')
+        # Parsing xml response
         root = ET.fromstring(formattedResponse)
         jsonDict={}
         for i in root: 
