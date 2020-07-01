@@ -57,6 +57,13 @@ class fetchPendingReservations(APIView):
                     itemDict['restaurant'] = item.restaurant
                     itemDict['numberOfPeople'] = item.numberOfPeople
                     itemDict['time'] = item.time
+                    # get the offers from restaurant table
+                    # needs improvement
+                    try:
+                        restaurant = Restaurant.objects.filter(name=item.restaurant)[0]
+                        itemDict['offers'] = restaurant.offers
+                    except IndexError as e:
+                        itemDict['offers']= 'None'
                     jsonList.append(itemDict)
                 return Response({
                     'result': 'true',
